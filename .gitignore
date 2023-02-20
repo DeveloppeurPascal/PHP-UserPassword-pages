@@ -86,3 +86,7 @@ TMSWeb/
 
 # Private directory
 _PRIVATE/
+
+# don't publish parameters files in repositories (prod nor dev)
+config-dev.inc.php
+config-release.inc.php
