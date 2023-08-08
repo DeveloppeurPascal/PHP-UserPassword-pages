@@ -48,20 +48,47 @@
 						$error_message .= "Database access error. Contact the administrator.\n";
 					}
 					else {
-						$qry = $db->prepare("select id, email, password, pwd_salt, enabled from users where email=:email limit 0,1");
+						$qry = $db->prepare("select id, email, password, pwd_salt, enabled, comp from users where email=:email limit 0,1");
 						$qry->execute(array(":email" => $email));
 						if (false === ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
-							$qry = $db->prepare("insert into users (email, password, pwd_salt, enabled, create_ip, create_datetime) values (:e,:pwd,:s,1,:ci,:cdt)");
-							// TODO : replace enabled by an email check link
+							$qry = $db->prepare("insert into users (email, password, pwd_salt, enabled, create_ip, create_datetime, comp) values (:e,:pwd,:s,0,:ci,:cdt,:comp)");
 							$pwd_salt = getNewIdString(mt_rand(5,25));
-							$qry->execute(array(":e" => $email, ":pwd" => getEncryptedPassword($password, $pwd_salt), ":s" => $pwd_salt, ":ci" => $_SERVER["REMOTE_ADDR"], ":cdt" => date("YmdHis")));
-							header("location: signup-ok.php");
+							$activation_code = getNewIdString(25);
+							$activation_url = SITE_URL."signup-wait.php?a=".$activation_code."&k=".substr(md5($activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
+							setUserCompValue($comp, "act_code", $activation_code);
+							setUserCompValue($comp, "act_exp", time()+60*60); // Now + 1 hour (60s * 60m)
+							setUserCompValue($comp, "act_url", $activation_url);
+							$qry->execute(array(":e" => $email, ":pwd" => getEncryptedPassword($password, $pwd_salt), ":s" => $pwd_salt, ":ci" => $_SERVER["REMOTE_ADDR"], ":cdt" => date("YmdHis"), ":comp" => $comp));
+							if (_DEBUG) 
+							{
+								mail($email, "Please activate your email", "Hi\n\nPlease click on this link to activate your email :\n".$activation_url."\n\nBest regards\n\nThe team");
+							}
+							else {
+								// TODO : replace enabled by an email check link
+								die("Sending an activation email is not available here.");
+							}
+							header("location: signup-wait.php");
 							exit;
 						}
 						else {
 							$error = true;
 							$error_message .= "User already exists.\n";
-							// TODO : resend activation email depending on the user state
+							if (_DEBUG) 
+							{
+								$activation_url = getUserCompValue($rec->comp, "act_url");
+								if (false !== $activation_url) {
+									// TODO : tester expiration du lien, le regénérer s'il est expiré
+									mail($email, "Please activate your email", "Hi\n\nPlease click on this link to activate your email :\n".$activation_url."\n\nBest regards\n\nThe team");
+									$error_message .= "An activation link has been resend to you by email.\n";
+								}
+								else {
+									// TODO : erreur - pas d'url d'activation alors que compte non activé
+								}
+							}
+							else {
+								// TODO : replace enabled by an email check link
+								die("Sending an activation email is not available here.");
+							}
 						}
 					}
 				}
