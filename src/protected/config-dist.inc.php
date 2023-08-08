@@ -48,3 +48,8 @@
 	// (by default it is the same as for non connected user)
 	if (!defined("URL_CONNECTED_USER_HOMEPAGE"))
 		define("URL_CONNECTED_USER_HOMEPAGE", "./");
+
+	// absolute link to your website (don't forget a "/" at the end)
+	// (exemple : "https://mywebsite.com/")
+	if (!defined("SITE_URL"))
+		define("SITE_URL","");
