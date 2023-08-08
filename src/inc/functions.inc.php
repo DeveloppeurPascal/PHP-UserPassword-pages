@@ -64,8 +64,7 @@ function getEncryptedPassword($pwd, $salt) {
 	return sha1(PWD_SALT.$pwd.$salt);
 }
 
-function getNewIdNumber($size = 10)
-{
+function getNewIdNumber($size = 10) {
     $id = "";
     for ($j = 0; $j < $size / 5; $j++) {
         $num = mt_rand(0, 99999);
@@ -77,8 +76,7 @@ function getNewIdNumber($size = 10)
     return (substr($id, 0, $size));
 }
 
-function getNewIdString($size = 10)
-{
+function getNewIdString($size = 10) {
     $id = "";
 	while (strlen($id) < $size) {
         $num = mt_rand(1, 10+26+26)-1;
@@ -93,4 +91,52 @@ function getNewIdString($size = 10)
 		}
     }
     return $id;
+}
+
+function getUserCompValue($comp, $key) {
+	if (empty($comp)) {
+		return false;
+	}
+	else {
+		try {
+			$obj = json_decode($comp);
+			if (isset($obj->$key)) {
+				return $obj->$key;
+			}
+			else {
+				return false;
+			}
+		}
+		catch (PDOException $e) {
+			return false;
+		}
+		
+	}
+}
+
+function setUserCompValue(&$comp, $key, $value) {
+	if (! isset($key)) {
+		return false;
+	}
+	if (! isset($value)) {
+		return false;
+	}
+	if ((! isset($comp)) || empty($comp)) {
+		$obj = new stdClass();
+	}
+	else {
+		try {
+			$obj = json_decode($comp);
+		}
+		catch (PDOException $e) {
+			$obj = new stdClass();
+		}
+	}
+	$obj->$key = $value;
+	$comp = json_encode($obj);
+}
+
+function unsetUserCompKey(&$comp, $key) {
+	setUserCompValue($comp,$key,false);
+	// TODO : unset dans Users.comp
 }
