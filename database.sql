@@ -1,6 +1,4 @@
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+00:00";
 
 CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
@@ -13,7 +11,7 @@ CREATE TABLE `users` (
   `email_checked` bigint(1) NOT NULL DEFAULT 0,
   `email_check_ip` varchar(255) NOT NULL DEFAULT '',
   `email_check_datetime` char(14) NOT NULL DEFAULT '00000000000000'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) DEFAULT CHARSET=utf8mb4;
 
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
@@ -23,3 +21,5 @@ ALTER TABLE `users`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 COMMIT;
+
+alter table users add comp blob not null default '';
