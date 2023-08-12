@@ -19,6 +19,7 @@
 	
 	$error = false;
 	$error_message = "";
+	$DefaultField = "User";
 
 	if (isset($_POST["frm"]) && ("1" == $_POST["frm"])) {
 		$email = isset($_POST["user"])?trim(strip_tags($_POST["user"])):"";
@@ -31,6 +32,7 @@
 			if (empty($password)) {
 				$error = true;
 				$error_message .= "Fill your password to connect.\n";
+				$DefaultField = "Password";
 			}
 			else {
 				$db = getPDOConnection();
@@ -82,10 +84,10 @@
 	if ($error && (! empty($error_message))) {
 		print("<p class=\"error\">".nl2br($error_message)."</p>");
 	}
-?><form method="POST" action="login.php"><input type="hidden" name="frm" value="1">
+?><form method="POST" action="login.php" onSubmit="return ValidForm();"><input type="hidden" name="frm" value="1">
 			<p>
 				<label for="User">User email</label><br>
-				<input id="User" name="user" type="email" value="" prompt="Your email address">
+				<input id="User" name="user" type="email" value="<?php print(isset($email)?htmlspecialchars($email):""); ?>" prompt="Your email address">
 			</p>
 			<p>
 				<label for="Password">Password</label><br>
@@ -95,6 +97,24 @@
 				<button type="submit">Connect</button>
 			</p>
 		</form>
+<script>
+	document.getElementById('<?php print($DefaultField); ?>').focus();
+	function ValidForm() {
+		email = document.getElementById('User');
+		if (0 == email.value.length) {
+			email.focus();
+			window.alert('Your email address is needed !');
+			return false;
+		}
+		pwd = document.getElementById('Password');
+		if (0 == pwd.value.length) {
+			pwd.focus();
+			window.alert('New password needed !');
+			return false;
+		}
+		return true;
+	}
+</script>
 		<p><a href="lostpassword.php">Lost password</a></p>
 		<p><a href="signup.php">Sign up</a></p>
 <?php include_once(__DIR__."/inc/footer.inc.php"); ?></body>
