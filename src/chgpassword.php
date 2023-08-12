@@ -24,6 +24,7 @@
 
 	$error = false;
 	$error_message = "";
+	$DefaultField = "OldPassword";
 
 	if (isset($_POST["frm"]) && ("1" == $_POST["frm"])) {
 		$oldpassword = isset($_POST["oldpassword"])?trim(strip_tags($_POST["oldpassword"])):"";
@@ -101,7 +102,7 @@
 
 	switch ($ChgPasswordStatus) {
 		case CChgPasswordForm:
-?><form method="POST" action="chgpassword.php"><input type="hidden" name="frm" value="1">
+?><form method="POST" action="chgpassword.php" onSubmit="return ValidForm();"><input type="hidden" name="frm" value="1">
 	<p>
 		<label for="OldPassword">Old password</label><br>
 		<input id="OldPassword" name="oldpassword" type="password" value="" prompt="Your actual password">
@@ -117,7 +118,37 @@
 	<p>
 		<button type="submit">Change my password</button>
 	</p>
-</form><?php
+</form><script>
+	document.getElementById('<?php print($DefaultField); ?>').focus();
+	function ValidForm() {
+		opwd = document.getElementById('OldPassword');
+		if (0 == opwd.value.length) {
+			opwd.focus();
+			window.alert('Current password needed !');
+			return false;
+		}
+		pwd = document.getElementById('Password');
+		if (0 == pwd.value.length) {
+			pwd.focus();
+			window.alert('New password needed !');
+			return false;
+		}
+		pwd2 = document.getElementById('Password2');
+		if (0 == pwd2.value.length) {
+			pwd2.focus();
+			window.alert('New password needed !');
+			return false;
+		}
+		if (pwd.value != pwd2.value) {
+			pwd.value = '';
+			pwd2.value = '';
+			pwd.focus();
+			window.alert('Values are different, please rewrite them !');
+			return false;
+		}
+		return true;
+	}
+</script><?php
 			break;
 		case CChgPasswordOk:
 ?><p>Password changed.</p><?php
