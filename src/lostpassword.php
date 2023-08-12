@@ -26,6 +26,7 @@
 
 	$error = false;
 	$error_message = "";
+	$DefaultField = "User";
 
 	if (isset($_POST["frm"]) && ("1" == $_POST["frm"])) { // check email
 		$email = isset($_POST["user"])?trim(strip_tags($_POST["user"])):"";
@@ -74,6 +75,7 @@
 	}
 	else if (isset($_POST["frm"]) && ("2" == $_POST["frm"])) { // change password
 		$LostPasswordStatus = CLostPasswordChange;
+		$DefaultField = "Password";
 		$email = isset($_POST["user"])?trim(strip_tags($_POST["user"])):"";
 		if (empty($email)) {
 			$error = true;
@@ -124,7 +126,7 @@
 	}
 	else { // confirmation link received
 		// sample confirmation URL : 
-		// http://localhost/PHPUserForm/src/signup-wait.php?a=7xXC5qMHNKmQ8xIpdkvf8Bgjb&k=04f5fe7197&e=pprem%40pprem.net
+		// http://localhost/PHPUserForm/src/lostpassword.php?c=Aetjd4tHuoteB1azD4vtFETk2&k=8365ef7286&e=pprem%40pprem.net
 		
 		$confirmation_code = isset($_GET["c"])?trim($_GET["c"]):false;
 		if ((false !== $confirmation_code) && (! empty($confirmation_code))) {
@@ -149,8 +151,9 @@
 									unsetUserCompKey($rec->comp, "conf_exp");
 									unsetUserCompKey($rec->comp, "conf_url");
 									$qry = $db->prepare("update users set comp=:comp where id=:id");
-									$qry->execute(array(":comp" => $comp, ":id" => $rec->id));
+									$qry->execute(array(":comp" => $rec->comp, ":id" => $rec->id));
 									$LostPasswordStatus = CLostPasswordChange;
+									$DefaultField = "Password";
 								}
 							}
 						}
@@ -182,15 +185,27 @@
 
 	switch ($LostPasswordStatus) {
 		case CLostPasswordForm:
-?><form method="POST" action="lostpassword.php"><input type="hidden" name="frm" value="1">
+?><form method="POST" action="lostpassword.php" onSubmit="return ValidForm();"><input type="hidden" name="frm" value="1">
 	<p>
 		<label for="User">User email</label><br>
-		<input id="User" name="user" type="email" value="" prompt="Your email address">
+		<input id="User" name="user" type="email" value="<?php print(isset($email)?htmlspecialchars($email):""); ?>" prompt="Your email address">
 	</p>
 	<p>
 		<button type="submit">Get a password</button>
 	</p>
 </form>
+<script>
+	document.getElementById('<?php print($DefaultField); ?>').focus();
+	function ValidForm() {
+		email = document.getElementById('User');
+		if (0 == email.value.length) {
+			email.focus();
+			window.alert('Your email address is needed !');
+			return false;
+		}
+		return true;
+	}
+</script>
 <p><a href="login.php">Log in</a></p>
 <p><a href="signup.php">Sign up</a></p><?php
 			break;
@@ -199,7 +214,7 @@
 <p>Of course check your spams if you didn't see it in your inbox.</p><?php
 			break;
 		case CLostPasswordChange:
-?><form method="POST" action="lostpassword.php"><input type="hidden" name="frm" value="2"><input type="hidden" name="user" value="<?php print(htmlspecialchars($email)); ?>" READONLY="readonly"><input type="hidden" name="k" value="<?php $_SESSION["tempsalt"] = getNewIdString(mt_rand(5,25)); print(substr(md5($_SESSION["tempsalt"].LOSTPASSWORD_FORM_SALT.$email),7,10)); ?>">
+?><form method="POST" action="lostpassword.php" onSubmit="return ValidForm();"><input type="hidden" name="frm" value="2"><input type="hidden" name="user" value="<?php print(htmlspecialchars($email)); ?>" READONLY="readonly"><input type="hidden" name="k" value="<?php $_SESSION["tempsalt"] = getNewIdString(mt_rand(5,25)); print(substr(md5($_SESSION["tempsalt"].LOSTPASSWORD_FORM_SALT.$email),7,10)); ?>">
 	<p>
 		<label for="Password">Password</label><br>
 		<input id="Password" name="password" type="password" value="" prompt="Your password">
@@ -212,6 +227,31 @@
 		<button type="submit">Set my password</button>
 	</p>
 </form>
+<script>
+	document.getElementById('<?php print($DefaultField); ?>').focus();
+	function ValidForm() {
+		pwd = document.getElementById('Password');
+		if (0 == pwd.value.length) {
+			pwd.focus();
+			window.alert('New password needed !');
+			return false;
+		}
+		pwd2 = document.getElementById('Password2');
+		if (0 == pwd2.value.length) {
+			pwd2.focus();
+			window.alert('New password needed !');
+			return false;
+		}
+		if (pwd.value != pwd2.value) {
+			pwd.value = '';
+			pwd2.value = '';
+			pwd.focus();
+			window.alert('Values are different, please rewrite them !');
+			return false;
+		}
+		return true;
+	}
+</script>
 <p><a href="login.php">Log in</a></p>
 <p><a href="signup.php">Sign up</a></p><?php
 			break;
