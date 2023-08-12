@@ -1,9 +1,6 @@
 # TODO List
 
 
-* chgpassword.php
-
-
 * signup : add JavaScript to check user email 
 * signup : add JavaScript to check password validity before sending the form
 * login : add JavaScript to check user email 
