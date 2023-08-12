@@ -119,6 +119,7 @@
 					}
 				}
 			}
+			unset($_SESSION["tempsalt"]);
 		}
 	}
 	else { // confirmation link received
