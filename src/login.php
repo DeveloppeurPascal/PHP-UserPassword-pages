@@ -39,7 +39,7 @@
 					$error_message .= "Database access error. Contact the administrator.\n";
 				}
 				else {
-					$qry = $db->prepare("select id, email, password, pwd_salt, enabled from users where email=:email limit 0,1");
+					$qry = $db->prepare("select id, password, pwd_salt, enabled from users where email=:email limit 0,1");
 					$qry->execute(array(":email" => $email));
 					if (false === ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
 						$error = true;
@@ -55,7 +55,7 @@
 					}
 					else {
 						$_SESSION["id"] = $rec->id;
-						$_SESSION["email"] = $rec->email;
+						$_SESSION["email"] = $email;
 
 						header("location: ".URL_CONNECTED_USER_HOMEPAGE);
 						exit;
