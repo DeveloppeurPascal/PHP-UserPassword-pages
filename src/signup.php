@@ -16,6 +16,12 @@
 		exit;
 	}
 	
+	define("CSignupForm", 1);
+	define("CSignupWait", 2);
+	define("CSignupOk", 3);
+	
+	$SignupStatus = CSignupForm;
+	
 	$error = false;
 	$error_message = "";
 
@@ -54,7 +60,7 @@
 							$qry = $db->prepare("insert into users (email, password, pwd_salt, enabled, create_ip, create_datetime, comp) values (:e,:pwd,:s,0,:ci,:cdt,:comp)");
 							$pwd_salt = getNewIdString(mt_rand(5,25));
 							$activation_code = getNewIdString(25);
-							$activation_url = SITE_URL."signup-wait.php?a=".$activation_code."&k=".substr(md5($activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
+							$activation_url = SITE_URL."signup.php?a=".$activation_code."&k=".substr(md5($activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
 							setUserCompValue($comp, "act_code", $activation_code);
 							setUserCompValue($comp, "act_exp", time()+60*60); // Now + 1 hour (60s * 60m)
 							setUserCompValue($comp, "act_url", $activation_url);
@@ -67,8 +73,7 @@
 								// TODO : replace enabled by an email check link
 								die("Sending an activation email is not available here.");
 							}
-							header("location: signup-wait.php");
-							exit;
+							$SignupStatus = CSignupWait;
 						}
 						else {
 							$error = true;
@@ -95,6 +100,55 @@
 			}
 		}
 	}
+	else {
+		// sample activation URL : 
+		// http://localhost/PHPUserForm/src/signup-wait.php?a=7xXC5qMHNKmQ8xIpdkvf8Bgjb&k=04f5fe7197&e=pprem%40pprem.net
+		
+		$activation_code = isset($_GET["a"])?trim($_GET["a"]):false;
+		if ((false !== $activation_code) && (! empty($activation_code))) {
+			$key = isset($_GET["k"])?trim($_GET["k"]):false;
+			if ((false !== $key) && (! empty($key))) {
+				$email = isset($_GET["e"])?trim($_GET["e"]):false;
+				if ((false !== $email) && (! empty($email))) {
+					// var_dump($_GET);
+					// var_dump($activation_code);
+					// var_dump($key);
+					// var_dump($email);
+					// exit;
+					$db = getPDOConnection();
+					if (is_object($db)) {
+						// print("db ok");exit;
+						$qry = $db->prepare("select id, pwd_salt, comp from users where email=:email and enabled=0 limit 0,1");
+						$qry->execute(array(":email" => $email));
+						if (false !== ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
+							// print("user trouvé");exit;
+							// var_dump($rec); exit;
+							$activation_code = getUserCompValue($rec->comp, "act_code");
+							// var_dump($activation_code);
+							// print($rec->pwd_salt); exit;
+							// print(md5($activation_code.$rec->pwd_salt.$email)); exit;
+							if ($key == substr(md5($activation_code.$rec->pwd_salt.$email),7,10)) {
+								// print("clé ok");exit;
+								$activation_expiration = getUserCompValue($rec->comp, "act_exp");
+								if ($activation_expiration <= time()) {
+									// activation code expired
+									$SignupStatus = CSignupForm;
+								}
+								else {
+									unsetUserCompKey($comp, "act_code");
+									unsetUserCompKey($comp, "act_exp");
+									unsetUserCompKey($comp, "act_url");
+									$qry = $db->prepare("update users set enabled=1, email_checked=1, email_check_ip=:ip, email_check_datetime=:dt, comp=:comp where id=:id");
+									$qry->execute(array(":ip" => $_SERVER["REMOTE_ADDR"], ":dt" => date("YmdHis"), ":comp" => $comp, ":id" => $rec->id));
+									$SignupStatus = CSignupOk;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -114,23 +168,36 @@
 	if ($error && (! empty($error_message))) {
 		print("<p class=\"error\">".nl2br($error_message)."</p>");
 	}
+	
+	switch ($SignupStatus) {
+		case CSignupForm:
 ?><form method="POST" action="signup.php"><input type="hidden" name="frm" value="1">
-			<p>
-				<label for="User">User email</label><br>
-				<input id="User" name="user" type="email" value="" prompt="Your email address">
-			</p>
-			<p>
-				<label for="Password">Password</label><br>
-				<input id="Password" name="password" type="password" value="" prompt="Your password">
-			</p>
-			<p>
-				<label for="Password2">Password (rewrite the same)</label><br>
-				<input id="Password2" name="password2" type="password" value="" prompt="Your password">
-			</p>
-			<p>
-				<button type="submit">Register</button>
-			</p>
-		</form>
-		<p><a href="login.php">Log in</a></p>
-<?php include_once(__DIR__."/inc/footer.inc.php"); ?></body>
+	<p>
+		<label for="User">User email</label><br>
+		<input id="User" name="user" type="email" value="" prompt="Your email address">
+	</p>
+	<p>
+		<label for="Password">Password</label><br>
+		<input id="Password" name="password" type="password" value="" prompt="Your password">
+	</p>
+	<p>
+		<label for="Password2">Password (rewrite the same)</label><br>
+		<input id="Password2" name="password2" type="password" value="" prompt="Your password">
+	</p>
+	<p>
+		<button type="submit">Register</button>
+	</p>
+</form>
+<p><a href="login.php">Log in</a></p><?php
+			break;
+		case CSignupWait:
+?><p>We sent an activation email to your address. Please click on it.</p>
+<p>Of course check your spams if you didn't see it in your inbox.</p><?php
+			break;
+		case CSignupOk:
+?><p>Welcome new user. Please <a href="login.php">log in</a> to use the service.</p><?php
+			break;
+		default :
+	}
+ include_once(__DIR__."/inc/footer.inc.php"); ?></body>
 </html>
