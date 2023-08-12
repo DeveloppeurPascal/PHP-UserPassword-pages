@@ -40,7 +40,7 @@
 				$error_message .= "Database access error. Contact the administrator.\n";
 			}
 			else {
-				$qry = $db->prepare("select id, email, pwd_salt, enabled, comp from users where email=:email limit 0,1");
+				$qry = $db->prepare("select id, pwd_salt, enabled, comp from users where email=:email limit 0,1");
 				$qry->execute(array(":email" => $email));
 				if (false === ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
 					$error = true;
@@ -54,11 +54,11 @@
 					$pwd_salt = $rec->pwd_salt;
 					$confirmation_code = getNewIdString(25);
 					$confirmation_url = SITE_URL."lostpassword.php?c=".$confirmation_code."&k=".substr(md5(LOSTPASSWORD_LINK_SALT.$confirmation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
-					setUserCompValue($comp, "conf_code", $confirmation_code);
-					setUserCompValue($comp, "conf_exp", time()+60*60); // Now + 1 hour (60s * 60m)
-					setUserCompValue($comp, "conf_url", $confirmation_url);
-					$qry = $db->prepare("update users set comp=:comp where email=:e");
-					$qry->execute(array(":e" => $email, ":comp" => $comp));
+					setUserCompValue($rec->comp, "conf_code", $confirmation_code);
+					setUserCompValue($rec->comp, "conf_exp", time()+60*60); // Now + 1 hour (60s * 60m)
+					setUserCompValue($rec->comp, "conf_url", $confirmation_url);
+					$qry = $db->prepare("update users set comp=:comp where id=:id");
+					$qry->execute(array(":id" => $rec->id, ":comp" => $rec->comp));
 					if (_DEBUG)
 					{
 						mail($email, "Please confirm your email", "Hi\n\nPlease click on this link to confirm your email and change your password :\n".$confirmation_url."\n\nBest regards\n\nThe team");
@@ -144,9 +144,9 @@
 									$LostPasswordStatus = CLostPasswordForm;
 								}
 								else {
-									unsetUserCompKey($comp, "conf_code");
-									unsetUserCompKey($comp, "conf_exp");
-									unsetUserCompKey($comp, "conf_url");
+									unsetUserCompKey($rec->comp, "conf_code");
+									unsetUserCompKey($rec->comp, "conf_exp");
+									unsetUserCompKey($rec->comp, "conf_url");
 									$qry = $db->prepare("update users set comp=:comp where id=:id");
 									$qry->execute(array(":comp" => $comp, ":id" => $rec->id));
 									$LostPasswordStatus = CLostPasswordChange;
