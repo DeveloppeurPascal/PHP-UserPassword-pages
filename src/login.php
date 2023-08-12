@@ -54,9 +54,8 @@
 						$error_message .= "Access denied.\n";
 					}
 					else {
-						$_SESSION["id"] = $rec->id;
-						$_SESSION["email"] = $email;
-
+						setCurrentUserId($rec->id);
+						setCurrentUserEmail($email);
 						header("location: ".URL_CONNECTED_USER_HOMEPAGE);
 						exit;
 					}
