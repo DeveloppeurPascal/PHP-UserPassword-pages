@@ -53,3 +53,15 @@
 	// (exemple : "https://mywebsite.com/")
 	if (!defined("SITE_URL"))
 		define("SITE_URL","");
+
+	// salt for signup activation key (in email link)
+	if (!defined("SIGNUP_SALT"))
+		define("SIGNUP_SALT", "");
+
+	// salt for lost password confirmation key (in email link)
+	if (!defined("LOSTPASSWORD_LINK_SALT"))
+		define("LOSTPASSWORD_LINK_SALT", "");
+
+	// salt for lost password change key (in the change password form)
+	if (!defined("LOSTPASSWORD_FORM_SALT"))
+		define("LOSTPASSWORD_FORM_SALT", "");
