@@ -2,7 +2,6 @@
 
 
 * chgpassword.php
-* newpassword.php
 
 
 * signup : add JavaScript to check user email 
