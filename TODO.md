@@ -1,7 +1,6 @@
 # TODO List
 
 
-* lostpassword.php
 * chgpassword.php
 * newpassword.php
 
