@@ -12,9 +12,19 @@ function getCurrentUserId() {
 	return (isset($_SESSION["id"]) && (! empty($_SESSION["id"])))?intval($_SESSION["id"]):0;
 }
 
+// Set current connected user ID
+function setCurrentUserId($user_id) {
+	$_SESSION["id"] = $user_id;
+}
+
 // Return current connected user email
 function getCurrentUserEmail() {
 	return (isset($_SESSION["email"]) && (! empty($_SESSION["email"])))?$_SESSION["email"]:"";
+}
+
+// Set current connected user email
+function setCurrentUserEmail($user_email) {
+	$_SESSION["email"] = $user_email;
 }
 
 // Check if a user is connected and the session started
