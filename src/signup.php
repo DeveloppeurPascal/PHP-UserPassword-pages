@@ -9,6 +9,7 @@
 	
 	session_start();
 	require_once(__DIR__."/inc/functions.inc.php");
+	require_once(__DIR__."/inc/config.inc.php");
 
 	// This page is only available when no user is connected.
 	if (hasCurrentUser()) {
@@ -52,15 +53,16 @@
 					if (! is_object($db)) {
 						$error = true;
 						$error_message .= "Database access error. Contact the administrator.\n";
+						$SignupStatus = CSignupForm;
 					}
 					else {
-						$qry = $db->prepare("select id, email, password, pwd_salt, enabled, comp from users where email=:email limit 0,1");
+						$qry = $db->prepare("select id, comp from users where email=:email limit 0,1");
 						$qry->execute(array(":email" => $email));
 						if (false === ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
 							$qry = $db->prepare("insert into users (email, password, pwd_salt, enabled, create_ip, create_datetime, comp) values (:e,:pwd,:s,0,:ci,:cdt,:comp)");
 							$pwd_salt = getNewIdString(mt_rand(5,25));
 							$activation_code = getNewIdString(25);
-							$activation_url = SITE_URL."signup.php?a=".$activation_code."&k=".substr(md5($activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
+							$activation_url = SITE_URL."signup.php?a=".$activation_code."&k=".substr(md5(SIGNUP_SALT.$activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
 							setUserCompValue($comp, "act_code", $activation_code);
 							setUserCompValue($comp, "act_exp", time()+60*60); // Now + 1 hour (60s * 60m)
 							setUserCompValue($comp, "act_url", $activation_url);
@@ -70,7 +72,7 @@
 								mail($email, "Please activate your email", "Hi\n\nPlease click on this link to activate your email :\n".$activation_url."\n\nBest regards\n\nThe team");
 							}
 							else {
-								// TODO : replace enabled by an email check link
+								// TODO : replace this by an email check link
 								die("Sending an activation email is not available here.");
 							}
 							$SignupStatus = CSignupWait;
@@ -102,7 +104,7 @@
 	}
 	else {
 		// sample activation URL : 
-		// http://localhost/PHPUserForm/src/signup-wait.php?a=7xXC5qMHNKmQ8xIpdkvf8Bgjb&k=04f5fe7197&e=pprem%40pprem.net
+		// http://localhost/PHPUserForm/src/signup.php?a=zFEWi5EheiyqJyznxJFke8awI&k=2c0013a7e9&e=pprem%40pprem.net
 		
 		$activation_code = isset($_GET["a"])?trim($_GET["a"]):false;
 		if ((false !== $activation_code) && (! empty($activation_code))) {
@@ -110,25 +112,13 @@
 			if ((false !== $key) && (! empty($key))) {
 				$email = isset($_GET["e"])?trim($_GET["e"]):false;
 				if ((false !== $email) && (! empty($email))) {
-					// var_dump($_GET);
-					// var_dump($activation_code);
-					// var_dump($key);
-					// var_dump($email);
-					// exit;
 					$db = getPDOConnection();
 					if (is_object($db)) {
-						// print("db ok");exit;
 						$qry = $db->prepare("select id, pwd_salt, comp from users where email=:email and enabled=0 limit 0,1");
 						$qry->execute(array(":email" => $email));
 						if (false !== ($rec = $qry->fetch(PDO::FETCH_OBJ))) {
-							// print("user trouvé");exit;
-							// var_dump($rec); exit;
 							$activation_code = getUserCompValue($rec->comp, "act_code");
-							// var_dump($activation_code);
-							// print($rec->pwd_salt); exit;
-							// print(md5($activation_code.$rec->pwd_salt.$email)); exit;
-							if ($key == substr(md5($activation_code.$rec->pwd_salt.$email),7,10)) {
-								// print("clé ok");exit;
+							if ($key == substr(md5(SIGNUP_SALT.$activation_code.$rec->pwd_salt.$email),7,10)) {
 								$activation_expiration = getUserCompValue($rec->comp, "act_exp");
 								if ($activation_expiration <= time()) {
 									// activation code expired
