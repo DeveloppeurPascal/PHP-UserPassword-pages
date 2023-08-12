@@ -63,6 +63,7 @@
 							$pwd_salt = getNewIdString(mt_rand(5,25));
 							$activation_code = getNewIdString(25);
 							$activation_url = SITE_URL."signup.php?a=".$activation_code."&k=".substr(md5(SIGNUP_SALT.$activation_code.$pwd_salt.$email),7,10)."&e=".urlencode($email);
+							$comp = "";
 							setUserCompValue($comp, "act_code", $activation_code);
 							setUserCompValue($comp, "act_exp", time()+60*60); // Now + 1 hour (60s * 60m)
 							setUserCompValue($comp, "act_url", $activation_url);
@@ -125,11 +126,11 @@
 									$SignupStatus = CSignupForm;
 								}
 								else {
-									unsetUserCompKey($comp, "act_code");
-									unsetUserCompKey($comp, "act_exp");
-									unsetUserCompKey($comp, "act_url");
+									unsetUserCompKey($rec->comp, "act_code");
+									unsetUserCompKey($rec->comp, "act_exp");
+									unsetUserCompKey($rec->comp, "act_url");
 									$qry = $db->prepare("update users set enabled=1, email_checked=1, email_check_ip=:ip, email_check_datetime=:dt, comp=:comp where id=:id");
-									$qry->execute(array(":ip" => $_SERVER["REMOTE_ADDR"], ":dt" => date("YmdHis"), ":comp" => $comp, ":id" => $rec->id));
+									$qry->execute(array(":ip" => $_SERVER["REMOTE_ADDR"], ":dt" => date("YmdHis"), ":comp" => $rec->comp, ":id" => $rec->id));
 									$SignupStatus = CSignupOk;
 								}
 							}
