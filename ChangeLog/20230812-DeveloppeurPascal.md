@@ -11,3 +11,5 @@
 * ajout de code JavaScript pour contrôler les formulaires avant envoi au serveur et se positionner sur le premier champ à saisir par défaut sur tous les écrans
 
 * updated TODO list
+
+* release v1 - 20230812
